@@ -1,8 +1,10 @@
-"""Public source snapshot safeguard for CI and optional pre-commit use.
+"""Publication safeguard for the intelligence-writing-engine project.
 
-This heuristic rejects private file types/paths and high-confidence credential
-patterns in tracked files. It does not prove licensing or absence of all secrets.
-No tracked payload, file name, or credential value is emitted in diagnostics.
+This heuristic rejects private file types/paths and high-confidence
+credential patterns in tracked files, using this project's own pattern
+set — the same shapes the engine's publication guard (engine/guard.py)
+screens for. It does not prove absence of all secrets. No tracked
+payload, file name, or credential value is emitted in diagnostics.
 """
 from __future__ import annotations
 
@@ -26,9 +28,12 @@ BLOCKED_EXTENSIONS = frozenset({
     '.pem', '.pfx', '.p12', '.key', '.kdbx', '.sqlite', '.db', '.dump',
 })
 SECRET_PATTERNS = (
+    ('github_pat', re.compile(rb'github_pat_[A-Za-z0-9_]{20,}')),
+    ('github_token', re.compile(rb'\bgh[pousr]_[A-Za-z0-9]{20,}')),
+    ('openai_key', re.compile(rb'\bsk-[A-Za-z0-9_-]{20,}')),
+    ('aws_key', re.compile(rb'\bAKIA[0-9A-Z]{16}\b')),
     ('private_key', re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----')),
-    ('cloud_key', re.compile(rb'\bAKIA[A-Z0-9]{16}\b')),
-    ('provider_token', re.compile(rb'\b(?:gh[pousr]_|github_pat_)[A-Za-z0-9_]{30,}\b')),
+    ('bearer_value', re.compile(rb'Bearer\s+[A-Za-z0-9._-]{24,}')),
 )
 
 

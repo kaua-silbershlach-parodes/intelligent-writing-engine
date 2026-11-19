@@ -42,7 +42,11 @@ class CheckEntryTests(unittest.TestCase):
 
     def test_credential_shape(self):
         problems = guard.check_entry("notes.md", f"token {FAKE_TOKEN}".encode())
-        self.assertIn("provider_token", problems)
+        self.assertIn("github_pat", problems)
+
+    def test_openai_key_shape(self):
+        problems = guard.check_entry("notes.md", ("key " + "sk-" + "B" * 24).encode())
+        self.assertIn("openai_key", problems)
 
     def test_repo_tracked_files_pass(self):
         report = guard.scan_tracked(ROOT)
