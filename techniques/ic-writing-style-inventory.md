@@ -40,3 +40,12 @@ Complete extraction of the archived style guide, page by page: 3 of 3 pages proc
 - **Seven Steps of Review — Step 6: Line Edits** — Weed out extraneous detail; correct any grammatical errors, typos, and awkward sentence constructions.
 - **Seven Steps of Review — Step 7: Reread the Entire Text** — Sanity check: are the title and lead sentence clear and consistent with each other and with the rest of the text? Does the text flow? Is the piece concisely and precisely written and free of errors? If a graphic is used, does it effectively complement the piece?
 
+
+## Audit addendum — 2026-11-19
+
+Independent completeness audit (original × README) findings recorded here:
+
+- Page 1, "Successful writing is" list: one further list line between "Timely" and "Have a compelling argument" survives only as garbled glyphs (Latin fragments: a…er…he…c…). It was not flagged in the extraction above; it is flagged here. It may be a distinct bullet or a wrapped continuation of "Timely"; unrecoverable.
+- Page 1: two further lines of pure conversion glyphs (after "Persuade on facts and logic, not policy" and after "Accurately sourced") — no Latin characters survive; most consistent with graphic artifacts of the slide; no technique can be confirmed or excluded in them.
+- The audit restored the original's exact wording in the README: "why the US should care" (Message and Structure checklist groups) and "implications for the US?" (Seven Steps, step 4).
+- Audit verdict on the rest: page 2's decision checklist is 28/28 in the README and page 3's Seven Steps are complete with all sub-questions; nothing in the README section is unsupported.
