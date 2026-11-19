@@ -22,4 +22,16 @@ Five techniques, applied to this README itself:
 4. **Acknowledge Evidentiary Bias** — Identify the biases that may be inherent in the source of the information, or that may have colored it along the chain of acquisition, and acknowledge them.
 5. **Keep It Simple and Straightforward (KISS)** — Write in focused paragraphs built around a single topic sentence. Word choice is specific, and sentences stay simple and straightforward, so the audience is never lost in complexity that leads to confusion or misunderstanding.
 
-The complete texts are archived in the project: [techniques/intelligence-writing-tips.md](./techniques/intelligence-writing-tips.md) and [techniques/how-to-write-like-an-intelligence-analyst.md](./techniques/how-to-write-like-an-intelligence-analyst.md)
+## Decision writing techniques
+
+Seven techniques, applied to this README itself:
+
+1. **Persuade on Facts and Logic** — Analytic writing persuades the policymaker of the superior force of a new fact or idea. Be insightful: answer how and why, and never explain the obvious. Persuade on facts and logic, not policy.
+2. **Make Every Word Count** — Bring something new: insightful, timely, and accurately sourced. Make every word count, and ensure the reader takes away the same message you intended.
+3. **Know Your Customer** — Before writing, answer: who is your customer? What is the point? What is the most critical evidence? Is it compelling? Is it what the customer needs? Every paragraph should advance the story in a compelling manner.
+4. **Inverted Pyramid** — Put the most important material up front, and bound the subject to a few key points.
+5. **Direct Structure** — Keep it clean and stripped of clauses. Use precise language, avoid adverbs and adjectives, and ensure every sentence has a purpose: noun and verb within the first six words, with a direct object.
+6. **Know, Don't Know, Assess** — Distinguish clearly between what you know, what you don't know, and what you assess to be true. Make the reasoning behind every judgment transparent, articulate the reliability of your information, and account for alternative conclusions the same evidence could support. Keep the tone balanced and objective, free of value-laden terms and advocacy, and illustrate general points with concrete examples.
+7. **Review in Seven Steps** — Read the first sentence; quickly read the entire piece; read the title; check logic flow; check argumentation; line edits; reread the entire text as a final sanity check.
+
+The complete texts are archived in the project: [techniques/intelligence-writing-tips.md](./techniques/intelligence-writing-tips.md), [techniques/how-to-write-like-an-intelligence-analyst.md](./techniques/how-to-write-like-an-intelligence-analyst.md) and [techniques/ic-writing-style.md](./techniques/ic-writing-style.md)
