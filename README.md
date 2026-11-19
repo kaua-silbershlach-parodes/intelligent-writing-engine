@@ -3,7 +3,7 @@ A concise reference for intelligence writing: six core principles plus BLUF, sou
 
 ## The engine
 
-The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top. It is verified, not aspirational: the test suite in `tests/` runs 25 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on).
+The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top — all of it behind a security and assurance layer of gated modules. It is verified, not aspirational: the test suite in `tests/` runs 56 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on), plus a capstone assurance run that is green on every check.
 
 - **BM25** (`engine/bm25.py`) — lexical ranking with Okapi BM25 (k1 = 1.5, b = 0.75): exact-term evidence, length-normalized.
 - **Vector** (`engine/vector.py`) — vector-space ranking: every unit is a TF-IDF vector, and the query is ranked by cosine similarity.
@@ -12,6 +12,47 @@ The engine is working code, not just this reference: a retrieval engine over the
 - **Graph authority** (`engine/graph.py`) — PageRank over the corpus similarity graph; with `--graph`, hybrid scores are multiplied by (1 + authority), so central units outrank peripheral ones at equal similarity.
 - **Query expansion** (`engine/expand.py`) — pseudo-relevance feedback: the top first-pass documents contribute their strongest terms to the query (`--expand`), catching the same idea in different words.
 - **Threshold and metadata filters** — `--threshold` drops results below a final-score floor; `--kind` restricts retrieval to one corpus kind (a README section or a document).
+
+**Security and assurance layer** — every module is a gate: a decision either allows the operation or names the gate that failed. No module trusts a caller's claim; roles are assigned by the embedding application.
+
+| Module | Role |
+|---|---|
+| `engine/policy.py` | Service policy: the modes, the bounds, the caller roles |
+| `engine/gate.py` | Complete mediation: every query is checked before any index is touched |
+| `engine/a2a.py` | Agent-to-agent surface: agent card, task lifecycle (submitted → working → completed/failed/canceled), delegated search returning artifacts with provenance |
+| `engine/raguard.py` | Retrieval security: indirect-injection screening, near-duplicate (poisoning) audit, kind ACL |
+| `engine/threats.py` | Threat model: risk register and the evidence-state machine (an invalidated assumption stays invalidated) |
+| `engine/integrity.py` | Supply chain and change control: SHA-256 manifest over corpus and sources, standard-library-only audit |
+| `engine/audit.py` | Contract matrix: policy, agent card and CLI must expose the same modes |
+| `engine/telemetry.py` | Bounded telemetry ring — mode, result count, latency; never query text |
+| `engine/recovery.py` | Recovery rehearsal: indexes are derived state; a rebuild must reproduce identical rankings |
+| `engine/guard.py` | Publication guard: credential-shape scan of the tree before anything is published |
+| `engine/recon.py` | Uniform error surface: stable error codes, no corpus internals, no echoed input |
+| `engine/assurance.py` | Capstone: one run, one evidence report — `python -m engine.assurance` |
+
+The end-to-end process:
+
+```mermaid
+flowchart TD
+    Q["Query — user or agent task"] --> GATE{"Mediation gate<br/>policy · bounds · zero-vector check"}
+    GATE -->|denied| ERR["Uniform error code"]
+    GATE -->|allowed| EXP["Query expansion<br/>pseudo-relevance feedback"]
+    EXP --> RECALL["Multi-way recall — whole corpus"]
+    RECALL --> BM["BM25 ranker"]
+    RECALL --> VX["Vector ranker — TF-IDF cosine"]
+    BM --> FUSE["Fusion — weighted 0.7/0.3 or rank fusion"]
+    VX --> FUSE
+    FUSE --> RERANK["Feature reranking<br/>phrase match + term coverage"]
+    RERANK --> GRAPH["Graph authority<br/>score x (1 + PageRank)"]
+    GRAPH --> FILTER["Threshold + kind filters"]
+    FILTER --> OUT["Ranked techniques<br/>unit id + kind = provenance"]
+    OUT --> A2A["A2A artifacts on the task"]
+    INT["Integrity manifest + stdlib audit"] --> CAP["Capstone evidence report"]
+    PROBE["Probe suite — 6/6"] --> CAP
+    CONTRACT["Contract matrix audit"] --> CAP
+    RECOV["Recovery rehearsal"] --> CAP
+    CAP -.->|verifies| GATE
+```
 
 Run it from the repository root (Python standard library only):
 
@@ -26,7 +67,7 @@ Real output, fusion mode:
     2. [analytic-73] Briefing Essentials — 0.579
     3. [doc-analytic_thinking_and_presentation-p07] analytic-thinking-and-presentation.md — page 7 — 0.417
 
-Tests: `python -m unittest discover -s tests -t . -v` — 25 tests, all passing.
+Tests: `python -m unittest discover -s tests -t . -v` — 56 tests, all passing. Capstone: `python -m engine.assurance` — every check green, probes 6/6.
 
 ## Intelligence writing techniques
 
