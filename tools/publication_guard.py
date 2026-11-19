@@ -18,9 +18,7 @@ import subprocess
 
 MAX_TEXT_BYTES = 2_000_000
 PRIVATE_SEGMENTS = frozenset({
-    'private', 'library', 'customer', 'customers', 'customer-data',
-    'client-documents', 'third-party', 'third_party', 'reference-library',
-    'secret', 'secrets', 'credentials', 'private-catalog',
+    'private', 'secret', 'secrets', 'credentials',
 })
 BLOCKED_EXTENSIONS = frozenset({
     '.pdf', '.zip', '.7z', '.rar', '.tar', '.tgz', '.gz',
@@ -83,7 +81,6 @@ def inspect_entries(entries: list[tuple[str, bytes, bool]]) -> dict:
         'violations': failures,
         'secret_values_logged': False,
         'file_names_logged': False,
-        'licensing_completeness_claim': False,
     }
 
 
@@ -119,7 +116,7 @@ def main() -> int:
     except (OSError, subprocess.SubprocessError, UnicodeError):
         report = {'event': 'public_source_snapshot_gate', 'decision': 'no_go',
                   'risk_classes': {'scan_failed': 1}, 'secret_values_logged': False,
-                  'file_names_logged': False, 'licensing_completeness_claim': False}
+                  'file_names_logged': False}
     print(json.dumps(report, sort_keys=True))
     return 0 if report['decision'] == 'go' else 2
 

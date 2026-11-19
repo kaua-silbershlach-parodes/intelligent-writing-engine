@@ -130,7 +130,7 @@ def scan_pre_push(root: Path, refs: str) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Private source pre-commit/pre-push gate")
+    parser = argparse.ArgumentParser(description="Publication gate for the intelligence-writing-engine project (pre-commit/pre-push)")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--staged", action="store_true")
