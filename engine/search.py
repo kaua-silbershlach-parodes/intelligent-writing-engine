@@ -14,6 +14,7 @@ from .bm25 import BM25Index
 from .corpus import load_corpus, tokenize
 from .fusion import fusion_search
 from .graph import GraphIndex
+from .recon import EngineError
 from .rerank import hybrid_search
 from .vector import VectorIndex
 
@@ -25,7 +26,20 @@ def build_indexes(units=None):
 
 def run(query, mode="hybrid", top=5, threshold=0.0, graph=False,
         expand=False, kind=None):
+    from . import gate, recon, telemetry
     bm25_index, vector_index = build_indexes()
+    decision = gate.mediate(query, mode, top, set(bm25_index.idf))
+    if not decision.allowed:
+        raise recon.EngineError(decision.failed_gate)
+    with telemetry.Timer() as timer:
+        results = _run(query, mode, top, threshold, graph, expand, kind,
+                       bm25_index, vector_index)
+    telemetry.record(mode, len(results), timer.ms)
+    return results
+
+
+def _run(query, mode, top, threshold, graph, expand, kind,
+         bm25_index, vector_index):
     q_tokens = tokenize(query)
     if expand and mode in ("bm25", "vector", "fusion"):
         from .expand import expand_tokens
@@ -61,9 +75,13 @@ def main(argv=None):
     parser.add_argument("--kind", default=None,
                         help="metadata filter: only this corpus kind")
     args = parser.parse_args(argv)
-    results = run(args.query, mode=args.mode, top=args.top,
-                  threshold=args.threshold, graph=args.graph,
-                  expand=args.expand, kind=args.kind)
+    try:
+        results = run(args.query, mode=args.mode, top=args.top,
+                      threshold=args.threshold, graph=args.graph,
+                      expand=args.expand, kind=args.kind)
+    except EngineError as error:
+        print(str(error))
+        return 2
     if not results:
         print("No matching techniques.")
         return 1
