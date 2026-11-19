@@ -12,4 +12,4 @@ Six techniques, applied to this README itself:
 5. **Avoid Observations** — Observations aren't analytical. Determine whether your assessment is analytical and forward-leaning, and not just an observation.
 6. **Objectivity** — Check your biases. Check them again. Now have a peer or colleague review your work. Avoid any biases that could skew your analysis or impact your or your organization's reputation.
 
-The complete text is archived in the project: [techniques/intelligence-writing-tips.txt](./techniques/intelligence-writing-tips.txt)
+The complete texts are archived in the project: [techniques/intelligence-writing-tips.md](./techniques/intelligence-writing-tips.md) and [techniques/how-to-write-like-an-intelligence-analyst.md](./techniques/how-to-write-like-an-intelligence-analyst.md)
