@@ -80,6 +80,30 @@ Git hooks: `.githooks/pre-commit` and `.githooks/pre-push` run `tools/git_public
 
 Tools: `tools/` carries the project's operational utilities — bounded subprocess and capture runners, a strict consumer for gate and assurance reports (pinned artifacts, never a production authorization), a matrix replay audit, an evidence-package gate, a disaster risk matrix with a fail-closed plan gate, and a checkpoint writer. CI: `.github/workflows/tests.yml` runs the suite and the capstone on every push.
 
+## Demonstration
+
+One flawed test text, carried through the whole engine until it scores 100. Full record: [demo/DEMONSTRATION.md](demo/DEMONSTRATION.md); machine-readable results: [demo/results.json](demo/results.json); reproduce with `python demo/run_demo.py`.
+
+- Retrieval: the text's flaws became queries, run under bm25, vector, hybrid and fusion, plus the threshold, graph and expansion options — the right technique ranked first on every pass.
+- Rewrite: five passes scored by a mechanical rubric (BLUF judgment first 20, quantified evidence 20, active voice 15, a named confidence level 15, estimative probability 10, named sourcing 10, a recommended action with a deadline 10): 0 → 30 → 55 → 75 → 100.
+- Fifteen questions: each answered by the engine's top-ranked technique. Two first attempts ranked the wrong unit first; both are shown and corrected before scoring. Score: 100/100.
+- Usage ledger: 43 recorded executions covering every engine module and every tool — the mediation gate allowing and denying, the A2A task lifecycle completing for a known caller and failing at the gate for an unknown one, the injection screen, the integrity manifest catching a tampered file, the security scenario suites blocking 94 violations (8 lifecycle + 22 retrieval + 28 infrastructure + 12 change + 24 AI assurance), the rate limiter shedding batch load while protecting the control tool, and the capstone green at probes 6/6.
+
+```mermaid
+flowchart TD
+    T0["TEST TEXT - pass 0<br/>buried conclusion, passive voice,<br/>no numbers, no confidence<br/>SCORE 0/100"]
+    T0 --> Q["Flaws turned into queries"]
+    Q --> R["Retrieval passes<br/>bm25 - vector - hybrid - fusion<br/>+ threshold - graph - expand"]
+    R --> K["Techniques ranked with provenance<br/>analyst-01 BLUF - analytic-31 active voice<br/>core-03 So What? - analytic-66 actionable"]
+    K --> P1["Pass 1<br/>SCORE 30/100"]
+    P1 --> P2["Pass 2<br/>SCORE 55/100"]
+    P2 --> P3["Pass 3<br/>SCORE 75/100"]
+    P3 --> P4["Pass 4<br/>SCORE 100/100"]
+    P4 --> F["FINAL TEXT<br/>BLUF + numbers + probability + confidence<br/>+ implication + action with deadline<br/>SCORE 100/100"]
+    F --> Z["15 questions answered by the engine<br/>100/100 points"]
+    Z --> L["Usage ledger<br/>every module and tool executed"]
+```
+
 ## Intelligence writing techniques
 
 Six techniques, applied to this README itself:
