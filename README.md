@@ -3,7 +3,7 @@ A concise reference for intelligence writing: six core principles plus BLUF, sou
 
 ## The engine
 
-The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top — all of it behind a security and assurance layer of gated modules. It is verified, not aspirational: the test suite in `tests/` runs 65 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on), plus a capstone assurance run that is green on every check.
+The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top — all of it behind a security and assurance layer of gated modules. It is verified, not aspirational: the test suite in `tests/` runs 118 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on), plus a capstone assurance run that is green on every check.
 
 - **BM25** (`engine/bm25.py`) — lexical ranking with Okapi BM25 (k1 = 1.5, b = 0.75): exact-term evidence, length-normalized.
 - **Vector** (`engine/vector.py`) — vector-space ranking: every unit is a TF-IDF vector, and the query is ranked by cosine similarity.
@@ -29,6 +29,13 @@ The engine is working code, not just this reference: a retrieval engine over the
 | `engine/guard.py` | Publication guard: credential-shape scan of the tree before anything is published |
 | `engine/recon.py` | Uniform error surface: stable error codes, no corpus internals, no echoed input |
 | `engine/assurance.py` | Capstone: one run, one evidence report — `python -m engine.assurance` |
+| `engine/lifecycle.py` | Assessment lifecycle: fixed phases, every transition gated on its own evidence |
+| `engine/agentsec.py` | Agent authorization: untrusted content is data and can never authorize an action; sensitive egress disabled |
+| `engine/vectorsec.py` | Vector retrieval security: ACL, tenant/session binding, export bans, budgets — raw vectors never returned |
+| `engine/infrastructure.py` | Infrastructure policy: 26 workload fields that must all hold before a preview |
+| `engine/change.py` | Change security: 12 gates a change must pass in order, from trusted origin to documented rollback |
+| `engine/aiassurance.py` | AI assurance: 24 gates from approved mission to independent verification before closure |
+| `engine/ratelimit.py` | Rate limiting: per-client token buckets, bounded backoff with jitter, a priority gate that protects the control class |
 
 The end-to-end process:
 
@@ -67,9 +74,11 @@ Real output, fusion mode:
     2. [analytic-73] Briefing Essentials — 0.579
     3. [doc-analytic_thinking_and_presentation-p07] analytic-thinking-and-presentation.md — page 7 — 0.417
 
-Tests: `python -m unittest discover -s tests -t . -v` — 65 tests, all passing. Capstone: `python -m engine.assurance` — every check green, probes 6/6.
+Tests: `python -m unittest discover -s tests -t . -v` — 118 tests, all passing. Capstone: `python -m engine.assurance` — every check green, probes 6/6.
 
 Git hooks: `.githooks/pre-commit` and `.githooks/pre-push` run `tools/git_publication_gate.py` over the exact staged blobs and over every outgoing commit — fail closed, logging risk categories only, never file names or values. Opt in per clone: `git config --local core.hooksPath .githooks`.
+
+Tools: `tools/` carries the project's operational utilities — bounded subprocess and capture runners, a strict consumer for gate and assurance reports (pinned artifacts, never a production authorization), a matrix replay audit, an evidence-package gate, a disaster risk matrix with a fail-closed plan gate, and a checkpoint writer. CI: `.github/workflows/tests.yml` runs the suite and the capstone on every push.
 
 ## Intelligence writing techniques
 
