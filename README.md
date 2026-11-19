@@ -1,6 +1,28 @@
 # Intelligence Writing Engine — A Guide to Techniques
 A concise reference for intelligence writing: six core principles plus BLUF, source-bias awareness, judgment/evidence separation, IC decision-writing checklists and review steps, synthesis (1+1=3), internal formula, ACH, alternative scenarios, and oral briefing craft.
 
+## The engine
+
+The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in three modes. It is verified, not aspirational: the test suite in `tests/` runs 14 tests, all passing, including top-1 hits for "bottom line up front" (BM25 and hybrid), "use the active voice" (vector) and "concept paper" (hybrid).
+
+- **BM25** (`engine/bm25.py`) — lexical ranking with Okapi BM25 (k1 = 1.5, b = 0.75): exact-term evidence, length-normalized.
+- **Vector** (`engine/vector.py`) — vector-space ranking: every unit is a TF-IDF vector, and the query is ranked by cosine similarity.
+- **Hybrid** (`engine/rerank.py`) — reciprocal rank fusion of the two rankings, reranked by phrase match and query-term coverage of title and body.
+
+Run it from the repository root (Python standard library only):
+
+    python -m engine "bottom line up front" --mode bm25 --top 3
+    python -m engine "why the US should care" --mode vector --top 3
+    python -m engine "concept paper" --mode hybrid --top 3
+
+Real output, hybrid mode:
+
+    1. [analytic-41] Write a Concept Paper First — 0.928
+    2. [doc-analytic_thinking_and_presentation-p46] analytic-thinking-and-presentation.md — page 46 — 0.573
+    3. [analytic-61] When and How — 0.567
+
+Tests: `python -m unittest discover -s tests -t . -v` — 14 tests, all passing.
+
 ## Intelligence writing techniques
 
 Six techniques, applied to this README itself:
