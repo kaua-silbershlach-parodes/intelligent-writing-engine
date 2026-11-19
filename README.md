@@ -3,25 +3,30 @@ A concise reference for intelligence writing: six core principles plus BLUF, sou
 
 ## The engine
 
-The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in three modes. It is verified, not aspirational: the test suite in `tests/` runs 14 tests, all passing, including top-1 hits for "bottom line up front" (BM25 and hybrid), "use the active voice" (vector) and "concept paper" (hybrid).
+The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top. It is verified, not aspirational: the test suite in `tests/` runs 25 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on).
 
 - **BM25** (`engine/bm25.py`) — lexical ranking with Okapi BM25 (k1 = 1.5, b = 0.75): exact-term evidence, length-normalized.
 - **Vector** (`engine/vector.py`) — vector-space ranking: every unit is a TF-IDF vector, and the query is ranked by cosine similarity.
-- **Hybrid** (`engine/rerank.py`) — reciprocal rank fusion of the two rankings, reranked by phrase match and query-term coverage of title and body.
+- **Fusion** (`engine/fusion.py`) — weighted linear fusion of the two similarities: min-max normalized BM25 and vector scores combined 0.7 keyword + 0.3 vector.
+- **Hybrid** (`engine/rerank.py`) — multi-way recall over the whole corpus, reciprocal rank fusion of the two rankings, reranked by phrase match and query-term coverage of title and body.
+- **Graph authority** (`engine/graph.py`) — PageRank over the corpus similarity graph; with `--graph`, hybrid scores are multiplied by (1 + authority), so central units outrank peripheral ones at equal similarity.
+- **Query expansion** (`engine/expand.py`) — pseudo-relevance feedback: the top first-pass documents contribute their strongest terms to the query (`--expand`), catching the same idea in different words.
+- **Threshold and metadata filters** — `--threshold` drops results below a final-score floor; `--kind` restricts retrieval to one corpus kind (a README section or a document).
 
 Run it from the repository root (Python standard library only):
 
     python -m engine "bottom line up front" --mode bm25 --top 3
     python -m engine "why the US should care" --mode vector --top 3
-    python -m engine "concept paper" --mode hybrid --top 3
+    python -m engine "bottom line up front" --mode fusion --top 3
+    python -m engine "concept paper" --mode hybrid --graph --top 3
 
-Real output, hybrid mode:
+Real output, fusion mode:
 
-    1. [analytic-41] Write a Concept Paper First — 0.928
-    2. [doc-analytic_thinking_and_presentation-p46] analytic-thinking-and-presentation.md — page 46 — 0.573
-    3. [analytic-61] When and How — 0.567
+    1. [analyst-01] Bottom Line Up Front (BLUF) — 1.000
+    2. [analytic-73] Briefing Essentials — 0.579
+    3. [doc-analytic_thinking_and_presentation-p07] analytic-thinking-and-presentation.md — page 7 — 0.417
 
-Tests: `python -m unittest discover -s tests -t . -v` — 14 tests, all passing.
+Tests: `python -m unittest discover -s tests -t . -v` — 25 tests, all passing.
 
 ## Intelligence writing techniques
 
