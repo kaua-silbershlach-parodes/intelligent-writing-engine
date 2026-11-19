@@ -101,3 +101,71 @@ class HybridTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+from engine.expand import expand_tokens
+from engine.fusion import fusion_search
+from engine.graph import GraphIndex
+
+GRAPH = GraphIndex(UNITS, VECTOR)
+
+
+class FusionTests(unittest.TestCase):
+    def test_bluf_is_top1(self):
+        results = fusion_search(tokenize("bottom line up front"), BM25, VECTOR, top=5)
+        self.assertEqual(uids(results)[0], "analyst-01")
+
+    def test_threshold_keeps_only_the_top_match(self):
+        results = fusion_search(tokenize("bottom line up front"), BM25, VECTOR,
+                                top=5, threshold=0.99)
+        self.assertEqual(uids(results), ["analyst-01"])
+
+    def test_deterministic(self):
+        first = uids(fusion_search(tokenize("objectivity"), BM25, VECTOR, top=10))
+        second = uids(fusion_search(tokenize("objectivity"), BM25, VECTOR, top=10))
+        self.assertEqual(first, second)
+        self.assertTrue(first)
+
+
+class GraphTests(unittest.TestCase):
+    def test_pagerank_sums_to_one(self):
+        self.assertAlmostEqual(sum(GRAPH.pagerank.values()), 1.0, places=6)
+
+    def test_pagerank_positive_everywhere(self):
+        self.assertTrue(all(v > 0 for v in GRAPH.pagerank.values()))
+        self.assertEqual(len(GRAPH.pagerank), len(UNITS))
+
+    def test_pagerank_deterministic(self):
+        rebuilt = GraphIndex(UNITS, VECTOR)
+        self.assertEqual(GRAPH.pagerank, rebuilt.pagerank)
+
+    def test_graph_keeps_concept_paper_top1(self):
+        results = hybrid_search("concept paper", BM25, VECTOR, top=5,
+                                graph_index=GRAPH)
+        self.assertEqual(uids(results)[0], "analytic-41")
+
+
+class ExpandTests(unittest.TestCase):
+    def test_expansion_adds_corpus_terms(self):
+        _expanded, added = expand_tokens(tokenize("bottom line up front"), VECTOR)
+        self.assertTrue(added)
+        vocab = set(BM25.idf)
+        self.assertTrue(all(term in vocab for term in added))
+
+    def test_expanded_hybrid_keeps_bluf_top1(self):
+        results = hybrid_search("bottom line up front", BM25, VECTOR, top=5,
+                                expand=True)
+        self.assertEqual(uids(results)[0], "analyst-01")
+
+
+class HybridOptionsTests(unittest.TestCase):
+    def test_kind_filter_returns_only_that_kind(self):
+        results = hybrid_search("judgements evidence", BM25, VECTOR, top=5,
+                                kind="Analyst writing techniques")
+        self.assertTrue(results)
+        self.assertTrue(all(u.uid.startswith("analyst-") for u, _s in results))
+
+    def test_threshold_above_max_returns_nothing(self):
+        results = hybrid_search("concept paper", BM25, VECTOR, top=5,
+                                threshold=2.0)
+        self.assertEqual(results, [])

@@ -46,13 +46,36 @@ def rerank(query, fused, pool_units):
     return results
 
 
-def hybrid_search(query, bm25_index, vector_index, top=10, pool=30):
+def hybrid_search(query, bm25_index, vector_index, top=10, pool=1024,
+                  threshold=0.0, graph_index=None, expand=False, kind=None):
+    """Multi-way recall + fused reranking.
+
+    pool: candidate recall per ranker (the whole corpus at this scale).
+    threshold: drop results whose final score falls below it.
+    graph_index: if given, multiply scores by (1 + PageRank authority).
+    expand: run pseudo-relevance feedback before the recall stage.
+    kind: metadata filter — only units of this kind are eligible.
+    """
     q_tokens = tokenize(query)
+    if expand:
+        from .expand import expand_tokens
+        q_tokens, _added = expand_tokens(q_tokens, vector_index)
     fused = {}
     pool_units = {}
     for ranking in (bm25_index.search(q_tokens, top=pool),
                     vector_index.search(q_tokens, top=pool)):
         for rank, (unit, _score) in enumerate(ranking, start=1):
+            if kind is not None and unit.kind != kind:
+                continue
             fused[unit.uid] = fused.get(unit.uid, 0.0) + 1.0 / (RRF_K + rank)
             pool_units[unit.uid] = unit
-    return rerank(query, fused, pool_units)[:top]
+    results = rerank(query, fused, pool_units)
+    if graph_index is not None:
+        results = [
+            (unit, score * (1.0 + graph_index.authority(unit.uid)))
+            for unit, score in results
+        ]
+        results.sort(key=lambda pair: (-pair[1], pair[0].uid))
+    if threshold > 0:
+        results = [pair for pair in results if pair[1] >= threshold]
+    return results[:top]

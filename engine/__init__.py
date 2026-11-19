@@ -1,11 +1,16 @@
 """Intelligence Writing Engine — retrieval over the technique corpus.
 
-Three retrieval modes over the same corpus (the README's technique items
-plus the archived documents, page by page):
+Retrieval modes over the same corpus (the README's technique items plus
+the archived documents, page by page):
 
-- BM25   — lexical ranking (Okapi BM25).
+- bm25   — lexical ranking (Okapi BM25).
 - vector — vector-space ranking (TF-IDF vectors, cosine similarity).
-- hybrid — reciprocal rank fusion of the two, plus a feature reranker.
+- fusion — weighted linear fusion (0.7 keyword + 0.3 vector).
+- hybrid — multi-way recall, reciprocal rank fusion, feature reranking.
+
+Options: PageRank graph authority (--graph), pseudo-relevance-feedback
+query expansion (--expand), a similarity threshold (--threshold) and a
+metadata filter (--kind).
 
 Standard library only. Run from the repository root:
 
