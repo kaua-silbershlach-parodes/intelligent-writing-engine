@@ -3,7 +3,7 @@ A concise reference for intelligence writing: six core principles plus BLUF, sou
 
 ## The engine
 
-The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top — all of it behind a security and assurance layer of gated modules. It is verified, not aspirational: the test suite in `tests/` runs 56 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on), plus a capstone assurance run that is green on every check.
+The engine is working code, not just this reference: a retrieval engine over the corpus below — the 111 technique items in this README plus the archived documents page by page, 196 units in total — that returns the techniques relevant to a query in four modes, with graph authority, query expansion, metadata filtering and a similarity threshold on top — all of it behind a security and assurance layer of gated modules. It is verified, not aspirational: the test suite in `tests/` runs 64 tests, all passing, including top-1 hits for "bottom line up front" (BM25, fusion and hybrid), "use the active voice" (vector) and "concept paper" (hybrid, also with graph authority on), plus a capstone assurance run that is green on every check.
 
 - **BM25** (`engine/bm25.py`) — lexical ranking with Okapi BM25 (k1 = 1.5, b = 0.75): exact-term evidence, length-normalized.
 - **Vector** (`engine/vector.py`) — vector-space ranking: every unit is a TF-IDF vector, and the query is ranked by cosine similarity.
@@ -67,7 +67,9 @@ Real output, fusion mode:
     2. [analytic-73] Briefing Essentials — 0.579
     3. [doc-analytic_thinking_and_presentation-p07] analytic-thinking-and-presentation.md — page 7 — 0.417
 
-Tests: `python -m unittest discover -s tests -t . -v` — 56 tests, all passing. Capstone: `python -m engine.assurance` — every check green, probes 6/6.
+Tests: `python -m unittest discover -s tests -t . -v` — 64 tests, all passing. Capstone: `python -m engine.assurance` — every check green, probes 6/6.
+
+Git hooks: `.githooks/pre-commit` and `.githooks/pre-push` run `tools/git_publication_gate.py` over the exact staged blobs and over every outgoing commit — fail closed, logging risk categories only, never file names or values. Opt in per clone: `git config --local core.hooksPath .githooks`.
 
 ## Intelligence writing techniques
 
