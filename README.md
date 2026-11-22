@@ -95,3 +95,39 @@ The same suite was then run end-to-end on Linux — the database as the official
 | Text generation (`UTL_TO_GENERATE_TEXT`) and RAG grounded generation | Blocked by the lab host — see below |
 
 Text generation is the one capability that stays blocked, and the blocker is the lab host, not the database or the model: the medium Private AI image (the one whose feature flags enable an LLM) was run with its official model directory and configuration; its Ministral-3 3B model deploys and loads (listed by the service with completion capability, and the inference server logs the model as loaded and accepts a chat request), but generation does not complete at usable speed on a host of this size (7 GB of RAM, 1.5 shared CPUs — the image's own setup asks for at least 6 GB for the container alone), across five attempts through the application and through the inference server directly, with the database up and down and with thread counts reduced. The runner probes the running container for a generation model on every run and executes both generation tests automatically whenever one is present.
+
+## The database engine
+
+[db_engine.py](db_engine.py) is the engine running on that full stack: the same six techniques and the same two models as `engine.py`, with every step executed by the database and its services instead of a local ONNX session. The corpus is the `TECHNIQUES` table (the content of `corpus.json` / `data/techniques.dmp`), both vector columns populated inside the database by `VECTOR_EMBEDDING`. Each mode is one of the standard patterns the suite exercises:
+
+| Mode | The standard technique it runs |
+|---|---|
+| `search` (default) | Exact search — the query embedded inside the database (`VECTOR_EMBEDDING`), ranked by `VECTOR_DISTANCE` with `FETCH EXACT` |
+| `approx` | Approximate search — `FETCH APPROX` over the vector indexes (HNSW on `e5_vector`, IVF on `minilm_vector`) |
+| `hybrid` | `DBMS_HYBRID_VECTOR.SEARCH` over the hybrid vector index — vector + text fusion (MiniLM, fixed by the index) |
+| `provider` | The query embedded by the Private AI container, called from SQL (`DBMS_VECTOR.UTL_TO_EMBEDDING`), then ranked exactly — MiniLM only: the container does not serve multilingual-e5-small |
+| `rag` | RAG retrieval — exact top 2 as context, the top text split by `DBMS_VECTOR_CHAIN.UTL_TO_CHUNKS`; grounded generation joins when an LLM endpoint is configured (blocked on the current lab host, as recorded above) |
+| `rest` | The corpus served over ORDS REST from the REST-enabled `TECHNIQUES` table — no SQL connection involved |
+
+Real output, against the lab the suite ran on:
+
+    $ python db_engine.py "how do I avoid bias in my analysis"
+    1. [core-06] Objectivity — 0.8967
+    2. [core-05] Avoid Observations — 0.8461
+    3. [core-01] Clarity — 0.8420
+
+    $ python db_engine.py "how do I avoid bias in my analysis" --model minilm
+    1. [core-06] Objectivity — 0.6955
+    2. [core-05] Avoid Observations — 0.4214
+    3. [core-02] Conciseness — 0.3005
+
+    $ python db_engine.py "bias in analysis" --mode hybrid
+    1. [core-06] Objectivity — score 70.88 (vector 72.57, text 54.00)
+
+    $ python db_engine.py "how do I avoid bias in my analysis" --mode rag --model minilm
+    Retrieved context:
+      [core-06] Objectivity
+      [core-05] Avoid Observations
+    Top text (Objectivity) split for the prompt: 4 chunks at a 10-word maximum (UTL_TO_CHUNKS).
+
+The in-database and container paths agree exactly: `search` and `provider` return the same MiniLM ranking to four decimal places (0.6955, 0.4214, 0.3005), and `approx` returns the same top 3 as `search`. The database engine needs the lab schema the suite runner prepares (models loaded in-database, `TECHNIQUES` populated, indexes created, the Private AI endpoint in `PRIVATE_AI_CONFIG`, ORDS serving for the `rest` mode); connection settings come from the environment (`ORACLE_LAB_USER`, `ORACLE_LAB_PW`, `ORACLE_LAB_DSN`, `ORDS_URL`). `engine.py` remains the standalone path for machines without the database.
