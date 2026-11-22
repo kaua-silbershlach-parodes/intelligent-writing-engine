@@ -45,4 +45,4 @@ Six techniques, applied to this README itself:
 5. **Avoid Observations** — Observations aren't analytical. Determine whether your assessment is analytical and forward-leaning, and not just an observation.
 6. **Objectivity** — Check your biases. Check them again. Now have a peer or colleague review your work. Avoid any biases that could skew your analysis or impact your or your organization's reputation.
 
-The six techniques are also kept in [techniques/intelligence-writing-tips.txt](techniques/intelligence-writing-tips.txt), in the plain-text format Oracle uses for the documents in its model package.
+For the database, the six techniques are kept the way Oracle distributes its own test data: a Data Pump export, [data/techniques.dmp](data/techniques.dmp) — table `TECHNIQUES`, 6 rows, 212,992 bytes, SHA-256 `bf5a0bc123ca0edb2db05a33d02212e0f50bda3bf76fbb5d885129c65687d3a0`. Import it with `impdp` to recreate the table; the round trip was verified (export, re-import, 6 rows back). `corpus.json` is the same content in the form `engine.py` reads.
