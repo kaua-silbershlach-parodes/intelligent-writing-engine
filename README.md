@@ -72,3 +72,26 @@ Every test Oracle publishes for this stack — the two official tutorials (the h
 | 14 | APEX demo, text generation | A UI demo and hosted-LLM generation — outside the database tests; generation needs an LLM endpoint this instance does not have |
 
 [tests/run_database_test.py](tests/run_database_test.py) runs the core test (steps 1–4 of the procedure, with the coverage counts); [tests/run_full_suite.py](tests/run_full_suite.py) runs the rest of the runnable suite (tests 2, 4–9 above, the index dictionary, and the execution plans).
+
+## The complete test suite (Linux lab)
+
+The same suite was then run end-to-end on Linux — the database as the official `gvenzl/oracle-free:23.26.4-full` container image (the same 26ai Free release as the Windows install), ORDS 26.3.1 serving from the same instance, and the Private AI Services container next to it — in a `WRITING` schema holding the six techniques from `corpus.json`. The step Windows cannot do happens first here: both models are loaded into the database and **both vector columns are populated inside the database** by `VECTOR_EMBEDDING` (6/6 rows each). The runner is [tests/run_full_suite_linux.py](tests/run_full_suite_linux.py):
+
+| Test | Result on Linux |
+|---|---|
+| Exact search, in-database embeddings vs the engine's own rankings (4 queries × 2 models) | Passed — top-1 agreement 8/8; the in-database MiniLM similarities reproduce the Windows database run to four decimal places (0.6955, 0.4976, 0.2686, 0.1035) |
+| External table over `techniques.txt` | Passed — 6/6 rows |
+| In-database `VECTOR_EMBEDDING` (the Windows ORA-40216 test) | Passed — 384 dimensions from both models |
+| `FETCH APPROX` vs `FETCH EXACT` | Passed — identical top 3 on both models |
+| Five distance metrics | Passed — same top 3 on all five |
+| IVF index (`NEIGHBOR PARTITIONS`, accuracy 90) | Passed — created, approximate ranking correct |
+| HNSW index (`INMEMORY NEIGHBOR GRAPH`, accuracy 95) | Passed — created; the execution plan shows `VECTOR INDEX HNSW SCAN` with no hint; both indexes `VALID` in the dictionary |
+| Hybrid Vector Index + `DBMS_HYBRID_VECTOR.SEARCH` (the Windows ORA-40284 test) | Passed — 6 hits; top score 70.88, the Objectivity text |
+| ORDS REST over `TECHNIQUES` | Passed — schema REST-enabled, first technique served over HTTP |
+| Container embeddings from SQL (`UTL_TO_EMBEDDING` via the Private AI endpoint) | Passed — 384 dimensions; a container-embedded query returns Objectivity as top 1 |
+| Chunking (`UTL_TO_CHUNKS`) | Passed — the Objectivity text splits into 4 chunks at a 10-word maximum |
+| CLIP text encoder through the container | Passed — 512 dimensions (this corpus is text; the image side of CLIP is exercised in the template repository's suite) |
+| RAG retrieval over the techniques | Passed — the bias question retrieves Objectivity and Avoid Observations as its context |
+| Text generation (`UTL_TO_GENERATE_TEXT`) and RAG grounded generation | Blocked by the lab host — see below |
+
+Text generation is the one capability that stays blocked, and the blocker is the lab host, not the database or the model: the medium Private AI image (the one whose feature flags enable an LLM) was run with its official model directory and configuration; its Ministral-3 3B model deploys and loads (listed by the service with completion capability, and the inference server logs the model as loaded and accepts a chat request), but generation does not complete at usable speed on a host of this size (7 GB of RAM, 1.5 shared CPUs — the image's own setup asks for at least 6 GB for the container alone), across five attempts through the application and through the inference server directly, with the database up and down and with thread counts reduced. The runner probes the running container for a generation model on every run and executes both generation tests automatically whenever one is present.
