@@ -45,4 +45,4 @@ Six techniques, applied to this README itself:
 5. **Avoid Observations** — Observations aren't analytical. Determine whether your assessment is analytical and forward-leaning, and not just an observation.
 6. **Objectivity** — Check your biases. Check them again. Now have a peer or colleague review your work. Avoid any biases that could skew your analysis or impact your or your organization's reputation.
 
-The complete document is archived verbatim in [techniques/intelligence-writing-tips.md](techniques/intelligence-writing-tips.md).
+The six techniques are also kept in [techniques/intelligence-writing-tips.txt](techniques/intelligence-writing-tips.txt), in the plain-text format Oracle uses for the documents in its model package.
