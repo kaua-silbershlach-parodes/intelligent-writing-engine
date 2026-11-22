@@ -50,23 +50,25 @@ Procedure:
    - q4 "como escrever com mais clareza"
 
 Embeddings are generated outside the database with ONNX Runtime (the augmented graphs need the extensions library). On Oracle AI Database 26ai **Free for Windows**, loading the model into the database itself is blocked by the edition (ORA-40216) — the same limit hit with Oracle's own parks test on this machine — so the model runs outside and everything else runs inside: storage, the vectors, the distance math, and the ranking. [tests/run_database_test.py](tests/run_database_test.py) is the script that ran (steps 3 and 4, with the coverage counts).
+## The complete test suite
 
-Results — measured 2026-11-22. The in-database ranking is **identical to the engine-side (numpy) ranking on all 8 runs, to 4 decimal places**:
+Every test Oracle publishes for this stack — the two official tutorials (the hybrid-search tutorial on the parks data and the getting-started tutorial on the headlines data), the official workshop (exhaustive search, approximate search, image search, RAG), and the model package's own README — was run with this project's content in place of theirs, on Oracle AI Database 26ai Free. One root cause decides everything that could not run: on the **Free edition for Windows** the in-database ONNX runtime is not available, so the model cannot be loaded into the database (ORA-40216). Everything that does not depend on a loaded model runs, and passed:
 
-| Query | Model | #1 in the database | Engine side |
-|---|---|---|---|
-| q1 | MiniLM | Objectivity 0.6955 | Objectivity 0.6955 |
-| q2 | MiniLM | So What? 0.4976 | So What? 0.4976 |
-| q3 | MiniLM | Audience Analysis 0.2686 | Audience Analysis 0.2686 |
-| q4 | MiniLM | Clarity 0.1035 | Clarity 0.1035 |
-| q1 | e5 | Objectivity 0.9020 | Objectivity 0.9020 |
-| q2 | e5 | So What? 0.8872 | So What? 0.8872 |
-| q3 | e5 | Audience Analysis 0.8468 | Audience Analysis 0.8468 |
-| q4 | e5 | Conciseness 0.8306 | Conciseness 0.8306 |
+| # | Oracle's test | Result with this content |
+|---|---|---|
+| 1 | Exact similarity search (`VECTOR_DISTANCE`, `FETCH EXACT`) | Passed — 8/8 runs identical to the engine side, 4 decimal places (table above) |
+| 2 | Bulk load through an external table over a text file | Passed — 6/6 rows read |
+| 3 | Data Pump import of the dataset (`.dmp`) | Passed — 6/6 rows, from this repository's own `data/techniques.dmp` |
+| 4 | Approximate search (`FETCH APPROX`) | Passed — identical to `EXACT` on both models |
+| 5 | Distance metrics (COSINE, EUCLIDEAN, EUCLIDEAN_SQUARED, DOT, MANHATTAN) | Passed — same top 3 on all five |
+| 6 | Execution-plan inspection | Passed — full scan before indexes, as in their tutorial; `VECTOR INDEX HNSW SCAN` after |
+| 7 | IVF vector index (`NEIGHBOR PARTITIONS`, target accuracy 90) | Passed — created, 6 vectors, approximate ranking correct |
+| 8 | HNSW vector index (`INMEMORY NEIGHBOR GRAPH`, target accuracy 95) | Passed — created after setting `vector_memory_size = 256M` and restarting the instance; 6 vectors; the optimizer picks the index unhinted |
+| 9 | Text chunking for RAG (`UTL_TO_CHUNKS`) | Passed — the Objectivity text splits into 4 chunks at a 10-word maximum |
+| 10 | In-database model load, `VECTOR_EMBEDDING`, mining-model dictionary | Blocked by the edition — load fails with ORA-40216; `VECTOR_EMBEDDING` then answers ORA-40284 (model does not exist) |
+| 11 | Hybrid Vector Index + `DBMS_HYBRID_VECTOR.SEARCH` (fusion INTERSECT/UNION, fuzzy text) | Blocked by the same root — the index object is created but its text side never leaves POPULATE, and SEARCH fails inside `drvdml.search_embedding` with ORA-40284: the hybrid vectorizer is the loaded model of test 10 |
+| 12 | ORDS REST service over the search | Not runnable here — ORDS is not installed in this Free instance (no ORDS users, no ORDS_ADMIN package) |
+| 13 | Image search (CLIP) | Different modality — the workshop searches an image corpus; this corpus is text |
+| 14 | APEX demo, text generation | A UI demo and hosted-LLM generation — outside the database tests; generation needs an LLM endpoint this instance does not have |
 
-What was used, and what the gain is:
-
-- Data: 100% from the `.dmp` (6/6 rows). Embeddings: 100% coverage, both models (6/6 each, 384 dimensions). Ranking: 100% inside the database (8/8 queries). Outside the database: only the embedding generation.
-- Accuracy gain: none — deliberately. Identical numbers are the proof that the database path is faithful.
-- The real gains: the corpus lives in the database as vectors, so a query is answered by SQL where the data sits instead of loading files and computing in the application; the corpus travels as a single Oracle-native artifact (one `impdp` recreates it anywhere); and the shape scales the way Oracle's own test does — the same pipeline ran their 472-row dataset.
-- The multilingual model's gain is measurable in the same table: on the Portuguese clarity query, MiniLM reaches the right technique at 0.1035 while e5 answers at 0.8306; on the English bias query, 0.6955 against 0.9020.
+[tests/run_database_test.py](tests/run_database_test.py) runs the core test (steps 1–4 of the procedure, with the coverage counts); [tests/run_full_suite.py](tests/run_full_suite.py) runs the rest of the runnable suite (tests 2, 4–9 above, the index dictionary, and the execution plans).
